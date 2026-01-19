@@ -9,7 +9,7 @@ export const authMiddleware = (
   const header = req.headers.authorization;
 
   if (!header) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       error: "Authorization header missing",
     });
@@ -18,7 +18,7 @@ export const authMiddleware = (
   const token = header?.split(" ")[1];
 
   if (!token) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       error: "Token missing",
     });
@@ -28,9 +28,9 @@ export const authMiddleware = (
     req.user = verifyToken(token);
     next();
   } catch {
-    
+    return res.status(401).json({
+      success: false,
+      error: "Token invalid",
+    });
   }
-
-
-
 };

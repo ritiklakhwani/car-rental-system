@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { userPayload } from "./server";
 
 const JWT_SECRET = process.env.jwt_secret;
 
@@ -20,5 +21,5 @@ export const signToken = (payload: object) => {
 };
 
 export const verifyToken = (token: string) => {
-  jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, JWT_SECRET) as userPayload;
 };
