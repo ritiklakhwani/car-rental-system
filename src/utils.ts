@@ -1,6 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { userPayload } from "./server";
+
+export type userPayload = {
+  userId: number;
+  username: string;
+};
 
 const JWT_SECRET = process.env.jwt_secret;
 
@@ -9,15 +13,15 @@ if(!JWT_SECRET){
 }
 
 export const hashedPassword = async (password: string) => {
-  bcrypt.hash(password, 10);
+  return bcrypt.hash(password, 10);
 };
 
 export const comparePassword = async (password: string, hash: string) => {
-  bcrypt.compare(password, hash);
+  return bcrypt.compare(password, hash);
 };
 
 export const signToken = (payload: object) => {
-  jwt.sign(payload, JWT_SECRET, { expiresIn: "1d" });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "1d" }) as string;
 };
 
 export const verifyToken = (token: string) => {
