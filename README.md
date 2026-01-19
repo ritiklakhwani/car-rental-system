@@ -110,7 +110,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 All /bookings routes are protected
 
-Testing with Postman (Step-by-Step)
+🧪 Testing with Postman (Step-by-Step)
 🔹 1. Signup User
 
 POST /auth/signup
@@ -260,7 +260,7 @@ Headers:
 
 Authorization: Bearer <JWT_TOKEN>
 
-ERROR HANDLING RULES
+🚫 Error Handling Rules
 
 All errors follow this format:
 
@@ -282,7 +282,8 @@ Not found → 404
 
 Conflict → 409
 
-ALL RULES IMPLEMENTED
+✅ All Rules Implemented
+
 JWT required for all booking routes
 
 Booking belongs only to logged-in user
@@ -297,7 +298,7 @@ Total cost = days × rentPerDay
 
 Only owner can update or delete booking
 
-Notes
+📌 Notes
 
 ts-node-dev is used only in development
 
@@ -307,7 +308,7 @@ Zod ensures strict input validation
 
 This project follows real-world backend practices in a simplified structure
 
-Author
+👨‍💻 Author
 
 Built by oceandev
 TypeScript + Backend focused project
