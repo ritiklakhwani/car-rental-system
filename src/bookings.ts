@@ -132,8 +132,16 @@ router.put("/:bookingId", async (req, res) => {
     },
   });
 
-  
+  res.json({
+    success: true,
+    data: {
+      message: "Booking updated successfully",
+      booking: { ...updated, totalCost: updated.days * updated.rentPerDay },
+    },
+  });
 });
+
+// delete booking
 router.delete("/", (req, res) => {});
 
 export default router;
