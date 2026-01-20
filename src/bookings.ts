@@ -142,6 +142,30 @@ router.put("/:bookingId", async (req, res) => {
 });
 
 // delete booking
-router.delete("/", (req, res) => {});
+router.delete("/:bookingId", async (req, res) => {
+  const bookingId = req.params.bookingId;
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: Number(bookingId) },
+  });
+  if (!booking)
+    return res.status(404).json({ success: false, error: "booking not found" });
+  if (booking.userId !== req.user!.userId)
+    return res
+      .status(403)
+      .json({ success: false, error: "booking does not belong to user" });
+
+  const deleted = booking.id;
+  await prisma.booking.delete({
+    where: { id: Number(bookingId) },
+  });
+
+  res.json({
+    success: true,
+    data: {
+      message: `Booking with booking ID ${deleted} deleted successfully`,
+    },
+  });
+});
 
 export default router;
