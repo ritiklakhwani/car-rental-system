@@ -105,7 +105,35 @@ router.get("/", async (req, res) => {
 });
 
 //update booking
-router.put("/", (req, res) => {});
+router.put("/:bookingId", async (req, res) => {
+  const bookingId = req.params.bookingId;
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: Number(bookingId) },
+  });
+  if (!booking)
+    return res.status(404).json({ success: false, error: "booking not found" });
+  if (booking.userId !== req.user!.userId)
+    return res
+      .status(403)
+      .json({ success: false, error: "booking does not belong to user" });
+
+  const parsed = updateBookingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: "invalid inputs" });
+  }
+  const updated = await prisma.booking.update({
+    where: { id: Number(bookingId) },
+    data: {
+      carName: parsed.data.carName ?? booking.carName,
+      days: parsed.data.days ?? booking.days,
+      rentPerDay: parsed.data.rentPerDay ?? booking.rentPerDay,
+      status: parsed.data.status ?? booking.status,
+    },
+  });
+
+  
+});
 router.delete("/", (req, res) => {});
 
 export default router;
