@@ -1,5 +1,16 @@
 node_modules
+
+# Build output
+dist/
+
 # Keep environment variables out of version control
 .env
 
+# Prisma generated client
 /src/generated/prisma
+
+# Logs
+*.log
+
+# OS files
+.DS_Store

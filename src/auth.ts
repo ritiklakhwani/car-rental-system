@@ -37,7 +37,7 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(401).json({
+    return res.status(400).json({
       success: false,
       error: "invalid inputs",
     });
@@ -63,7 +63,7 @@ router.post("/login", async (req, res) => {
 
   const token = signToken({ userId: user.id, username: user.username });
 
-  res.status(201).json({
+  res.status(200).json({
     success: true,
     data: { message: "Login successful", token },
   });

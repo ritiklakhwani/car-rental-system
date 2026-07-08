@@ -1,18 +1,29 @@
 {
   "name": "car-rental-system",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "A TypeScript/Express REST API for a car rental system with JWT authentication, ownership-based access control, and PostgreSQL via Prisma.",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ritiklakhwani/car-rental-system.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "express",
+    "typescript",
+    "prisma",
+    "postgresql",
+    "jwt",
+    "rest-api",
+    "car-rental"
+  ],
+  "author": "oceandev",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ritiklakhwani/car-rental-system/issues"

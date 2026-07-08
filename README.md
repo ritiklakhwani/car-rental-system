@@ -1,130 +1,216 @@
-# Car Rental System Backend
+# Car Rental System - Backend API
 
-A backend API for a **Car Rental System** built using **TypeScript, Express, PostgreSQL, Prisma, JWT, bcrypt, and Zod**.
+A RESTful backend API for a car rental system, built with TypeScript, Express, PostgreSQL, Prisma, JWT, bcrypt, and Zod.
 
-This project demonstrates:
-- Authentication & Authorization using JWT
-- Ownership-based access control
-- Database modeling with Prisma
-- Input validation using Zod
-- Clean and minimal backend architecture
+Users can sign up, log in, and manage their own car bookings. Every booking is protected by JWT authentication and ownership-based access control, so a user can only read, update, or delete their own bookings.
 
----
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Running PostgreSQL with Docker](#running-postgresql-with-docker)
+- [Environment Variables](#environment-variables)
+- [Authentication Flow](#authentication-flow)
+- [API Reference](#api-reference)
+- [Error Handling](#error-handling)
+- [Business Rules](#business-rules)
+- [Author](#author)
 
 ## Features
 
-- User Signup & Login
-- JWT-based Authentication
-- Protected Booking APIs
-- Create, Read, Update, Delete bookings
-- Booking summary for a user
-- Ownership checks (only owner can update/delete)
-- Proper error handling and validations
-
----
+- User signup and login
+- JWT-based authentication
+- Ownership-based authorization (a user can only access their own bookings)
+- Full booking CRUD (create, read, update, delete)
+- Booking summary per user (total bookings and total amount spent)
+- Input validation with Zod
+- Consistent JSON response envelope and centralized error handling
 
 ## Tech Stack
 
-- **Node.js**
-- **Express**
-- **TypeScript**
-- **PostgreSQL**
-- **Prisma ORM**
-- **JWT (jsonwebtoken)**
-- **bcrypt**
-- **Zod**
-- **Postman (for testing)**
+| Layer          | Technology                     |
+| -------------- | ------------------------------ |
+| Runtime        | Node.js                        |
+| Framework      | Express 5                      |
+| Language       | TypeScript                     |
+| Database       | PostgreSQL                     |
+| ORM            | Prisma                         |
+| Authentication | JSON Web Tokens (jsonwebtoken) |
+| Password hash  | bcrypt                         |
+| Validation     | Zod                            |
 
----
+## Project Structure
 
-## Project Structure (Minimal & Clean)
+```
+car-rental-system/
+├── prisma/
+│   ├── schema.prisma          # Database models (User, Booking)
+│   └── migrations/            # SQL migration history
+├── src/
+│   ├── server.ts              # App entry point and middleware wiring
+│   ├── prisma.ts              # Prisma client instance
+│   ├── prisma.config.ts       # Prisma CLI configuration
+│   ├── auth.ts                # Auth routes (signup, login)
+│   ├── bookings.ts            # Booking routes (CRUD + summary)
+│   ├── middleware.ts          # JWT authentication middleware
+│   ├── schema.ts              # Zod validation schemas
+│   ├── utils.ts               # bcrypt and JWT helpers
+│   ├── types.d.ts             # Express Request type augmentation
+│   └── generated/             # Prisma-generated client (not committed)
+├── docker-compose.yml         # Local PostgreSQL service
+├── .env.example               # Sample environment variables
+├── tsconfig.json
+└── package.json
+```
 
-src/
-├── server.ts # App entry point
-├── prisma.ts # Prisma client
-├── auth.ts # Auth routes
-├── bookings.ts # Booking routes
-├── middleware.ts # JWT auth middleware
-├── schemas.ts # Zod schemas
-├── utils.ts # bcrypt + jwt helpers
-└── types.d.ts # Express Request typing
+## Prerequisites
 
+- Node.js 18 or later
+- A PostgreSQL database (either a local instance, the provided Docker Compose service, or a hosted provider)
 
----
+## Getting Started
 
-## Setup Instructions
-
-### 1️⃣ Clone the repository
+### 1. Clone the repository
 
 ```bash
-git clone <repo-url>
-cd car-rental-backend
+git clone https://github.com/ritiklakhwani/car-rental-system.git
+cd car-rental-system
+```
 
-2️⃣ Install dependencies
+### 2. Install dependencies
+
+```bash
 npm install
+```
 
-3️⃣ Setup environment variables
+### 3. Configure environment variables
 
-Create a .env file in root:
+Copy the example file and fill in your values:
 
-PORT=3000
+```bash
+cp .env.example .env
+```
+
+See [Environment Variables](#environment-variables) for details.
+
+### 4. Set up the database
+
+Apply the schema and generate the Prisma client:
+
+```bash
+npm run prisma:migrate
+```
+
+This creates the tables, applies the schema to PostgreSQL, and generates the Prisma client.
+
+### 5. Run the server (development)
+
+```bash
+npm run dev
+```
+
+The server starts on `http://localhost:3000` (or the `PORT` you configured).
+
+A health check is available at `GET /health`, which returns `{ "status": "ok" }`.
+
+### Production build
+
+```bash
+npm run build
+npm start
+```
+
+## Running PostgreSQL with Docker
+
+If you do not have a local PostgreSQL instance, you can start one with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This starts a PostgreSQL 16 container on port `5432` with the default credentials `user` / `password` and database `car_rental`. The matching connection string is:
+
+```
 DATABASE_URL="postgresql://user:password@localhost:5432/car_rental"
-JWT_SECRET=supersecretkey
+```
 
-4️⃣ Setup Prisma & Database
-npx prisma migrate dev --name init
+After the container is healthy, run the migrations and start the server:
 
+```bash
+npm run prisma:migrate
+npm run dev
+```
 
-This will:
+To stop the database:
 
-Create tables
+```bash
+docker compose down
+```
 
-Apply schema to PostgreSQL
+## Environment Variables
 
-Generate Prisma client
+| Variable       | Description                                       | Example                                                  |
+| -------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| `PORT`         | Port the HTTP server listens on                   | `3000`                                                   |
+| `DATABASE_URL` | PostgreSQL connection string used by Prisma       | `postgresql://user:password@localhost:5432/car_rental`   |
+| `JWT_SECRET`   | Secret used to sign and verify JWTs               | `a-long-random-secret`                                   |
 
-5️⃣ Run the server (Development)
-npx ts-node-dev src/server.ts
+## Authentication Flow
 
+1. A user signs up with a username and password. The password is hashed with bcrypt before being stored.
+2. On login, the credentials are verified and a signed JWT is issued (valid for 1 day).
+3. The token payload contains:
 
-Server will start on:
+   ```json
+   {
+     "userId": 1,
+     "username": "rahul"
+   }
+   ```
 
-http://localhost:3000
+4. The token must be sent in the `Authorization` header on all protected routes:
 
-🔐 Authentication Flow
+   ```
+   Authorization: Bearer <JWT_TOKEN>
+   ```
 
-JWT is issued only on login
+5. All `/bookings` routes are protected by the authentication middleware.
 
-JWT payload:
+## API Reference
 
-{
-  "userId": 1,
-  "username": "rahul"
-}
+Base URL: `http://localhost:3000`
 
+| Method | Endpoint                    | Auth | Description                          |
+| ------ | --------------------------- | ---- | ------------------------------------ |
+| GET    | `/health`                   | No   | Health check                         |
+| POST   | `/auth/signup`              | No   | Create a new user                    |
+| POST   | `/auth/login`               | No   | Log in and receive a JWT             |
+| POST   | `/bookings`                 | Yes  | Create a booking                     |
+| GET    | `/bookings`                 | Yes  | List the current user's bookings     |
+| GET    | `/bookings?bookingId=1`     | Yes  | Get a single booking by id           |
+| GET    | `/bookings?summary=true`    | Yes  | Get a booking summary for the user   |
+| PUT    | `/bookings/:bookingId`      | Yes  | Update a booking                     |
+| DELETE | `/bookings/:bookingId`      | Yes  | Delete a booking                     |
 
-Token must be sent in headers:
+### Signup
 
-Authorization: Bearer <JWT_TOKEN>
+`POST /auth/signup`
 
+Request body:
 
-All /bookings routes are protected
-
-🧪 Testing with Postman (Step-by-Step)
-🔹 1. Signup User
-
-POST /auth/signup
-
-Body (JSON):
-
+```json
 {
   "username": "rahul",
-  "password": "123"
+  "password": "secret123"
 }
+```
 
+Response (201):
 
-Success (201):
-
+```json
 {
   "success": true,
   "data": {
@@ -132,21 +218,24 @@ Success (201):
     "userId": 1
   }
 }
+```
 
-🔹 2. Login User
+### Login
 
-POST /auth/login
+`POST /auth/login`
 
-Body (JSON):
+Request body:
 
+```json
 {
   "username": "rahul",
-  "password": "123"
+  "password": "secret123"
 }
+```
 
+Response (200):
 
-Success (200):
-
+```json
 {
   "success": true,
   "data": {
@@ -154,30 +243,29 @@ Success (200):
     "token": "<JWT_TOKEN>"
   }
 }
+```
 
+Use the returned token in the `Authorization` header for all booking requests.
 
-👉 Copy the token and use it in all booking requests.
+### Create Booking
 
-🔹 3. Create Booking
+`POST /bookings`
 
-POST /bookings
+Headers: `Authorization: Bearer <JWT_TOKEN>`
 
-Headers:
+Request body:
 
-Authorization: Bearer <JWT_TOKEN>
-
-
-Body (JSON):
-
+```json
 {
   "carName": "Honda City",
   "days": 3,
   "rentPerDay": 1500
 }
+```
 
+Response (201):
 
-Success (201):
-
+```json
 {
   "success": true,
   "data": {
@@ -186,34 +274,33 @@ Success (201):
     "totalCost": 4500
   }
 }
+```
 
-🔹 4. Get All Bookings
+### List Bookings
 
-GET /bookings
+`GET /bookings`
 
-Headers:
+Headers: `Authorization: Bearer <JWT_TOKEN>`
 
-Authorization: Bearer <JWT_TOKEN>
+Returns all bookings that belong to the authenticated user, each with a computed `totalCost`.
 
-🔹 5. Get Single Booking
+### Get a Single Booking
 
-GET /bookings?bookingId=1
+`GET /bookings?bookingId=1`
 
-Headers:
+Headers: `Authorization: Bearer <JWT_TOKEN>`
 
-Authorization: Bearer <JWT_TOKEN>
+Returns the booking with the given id, only if it belongs to the authenticated user.
 
-🔹 6. Booking Summary
+### Booking Summary
 
-GET /bookings?summary=true
+`GET /bookings?summary=true`
 
-Headers:
-
-Authorization: Bearer <JWT_TOKEN>
-
+Headers: `Authorization: Bearer <JWT_TOKEN>`
 
 Response:
 
+```json
 {
   "success": true,
   "data": {
@@ -223,94 +310,72 @@ Response:
     "totalAmountSpent": 6300
   }
 }
+```
 
+Only `booked` and `completed` bookings are counted; `cancelled` bookings are ignored.
 
-Only booked and completed bookings are counted
-cancelled bookings are ignored
+### Update Booking
 
-🔹 7. Update Booking
+`PUT /bookings/:bookingId`
 
-PUT /bookings/1
+Headers: `Authorization: Bearer <JWT_TOKEN>`
 
-Headers:
+Send any subset of fields. Update the booking details:
 
-Authorization: Bearer <JWT_TOKEN>
-
-
-Body (JSON):
-
+```json
 {
   "carName": "Verna",
   "days": 4,
   "rentPerDay": 1600
 }
+```
 
+Or update only the status:
 
-OR
-
+```json
 {
   "status": "completed"
 }
+```
 
-🔹 8. Delete Booking
+### Delete Booking
 
-DELETE /bookings/1
+`DELETE /bookings/:bookingId`
 
-Headers:
+Headers: `Authorization: Bearer <JWT_TOKEN>`
 
-Authorization: Bearer <JWT_TOKEN>
+Deletes the booking if it belongs to the authenticated user.
 
-🚫 Error Handling Rules
+## Error Handling
 
-All errors follow this format:
+All errors follow a consistent envelope:
 
+```json
 {
   "success": false,
   "error": "error message"
 }
+```
 
+| Status | Meaning                                  |
+| ------ | ---------------------------------------- |
+| 400    | Invalid input                            |
+| 401    | Unauthorized (missing or invalid token)  |
+| 403    | Forbidden (booking does not belong to user) |
+| 404    | Resource not found                       |
+| 409    | Conflict (for example, username taken)   |
+| 500    | Internal server error                    |
 
-Examples:
+## Business Rules
 
-Invalid inputs → 400
+- A JWT is required for all `/bookings` routes.
+- A booking belongs only to the user who created it.
+- `days` must be less than 365.
+- `rentPerDay` must be at most 2000.
+- A new booking is created with the status `booked`.
+- `totalCost` is computed as `days * rentPerDay`.
+- Only the owner can update or delete a booking.
 
-Unauthorized → 401
+## Author
 
-Forbidden (not owner) → 403
-
-Not found → 404
-
-Conflict → 409
-
-✅ All Rules Implemented
-
-JWT required for all booking routes
-
-Booking belongs only to logged-in user
-
-days < 365
-
-rentPerDay ≤ 2000
-
-Status on creation = "booked"
-
-Total cost = days × rentPerDay
-
-Only owner can update or delete booking
-
-📌 Notes
-
-ts-node-dev is used only in development
-
-Prisma handles all DB operations
-
-Zod ensures strict input validation
-
-This project follows real-world backend practices in a simplified structure
-
-👨‍💻 Author
-
-Built by oceandev
-TypeScript + Backend focused project
-
-
+Built by oceandev. A TypeScript and backend focused project demonstrating real-world API practices in a minimal, readable structure.
